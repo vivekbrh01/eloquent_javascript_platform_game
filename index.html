@@ -6,11 +6,17 @@
 		<!-- Tile -->
 		<title>Platform Game | EloquentJavaScript</title>
 		<!-- CSS -->
-		<link rel="stylesheet" href="./assets/stylesheets/style.css" />
+		<link
+			rel="stylesheet"
+			type="text/css"
+			href="./assets/stylesheets/style.css"
+		/>
 	</head>
 	<body>
-		<header>
-			<h1>.....Welcome to Platforms.....</h1>
-		</header>
+		<script type="text/javascript" src="game.js"></script>
+		<script>
+			let display = new DOMDisplay(document.body, simpleLevel);
+			display.syncState(State.start(simpleLevel));
+		</script>
 	</body>
 </html>
