@@ -11,11 +11,13 @@ let simpleLevelPlan = `
 
 class Level {
 	constructor(plan) {
-		
 		let rows = plan
 			.trim()
 			.split("\n")
 			.map((l) => [...l]);
+
+		console.log(rows);
+
 		this.height = rows.length;
 		this.width = rows[0].length;
 		this.startActors = [];
@@ -45,6 +47,8 @@ class State {
 	}
 }
 
+// Actors
+
 class Vec {
 	constructor(x, y) {
 		this.x = x;
@@ -57,6 +61,7 @@ class Vec {
 		return new Vec(this.x * factor, this.y * factor);
 	}
 }
+
 class Player {
 	constructor(pos, speed) {
 		this.pos = pos;
@@ -71,6 +76,7 @@ class Player {
 		return new Player(pos.plus(new Vec(0, -0.5)), new Vec(0, 0));
 	}
 }
+
 
 Player.prototype.size = new Vec(0.8, 1.5);
 
@@ -129,6 +135,7 @@ const levelChars = {
 };
 let simpleLevel = new Level(simpleLevelPlan);
 
+// Drawing
 
 function elt(name, attrs, ...children) {
 	let dom = document.createElement(name);
@@ -141,10 +148,10 @@ function elt(name, attrs, ...children) {
 	return dom;
 }
 
+
 class DOMDisplay {
 	constructor(parent, level) {
 		this.dom = elt("div", { class: "game" }, drawGrid(level));
-		// Used to track the elements that holds the actor so that they can be removed and replaced
 		this.actorLayer = null;
 		parent.appendChild(this.dom);
 	}
@@ -173,6 +180,7 @@ function drawGrid(level) {
 		)
 	);
 }
+
 function drawActors(actors) {
 	return elt(
 		"div",
@@ -187,6 +195,7 @@ function drawActors(actors) {
 		})
 	);
 }
+
 DOMDisplay.prototype.syncState = function (state) {
 	if (this.actorLayer) this.actorLayer.remove();
 	this.actorLayer = drawActors(state.actors);
@@ -194,6 +203,7 @@ DOMDisplay.prototype.syncState = function (state) {
 	this.dom.className = `game ${state.status}`;
 	this.scrollPlayerIntoView(state);
 };
+
 DOMDisplay.prototype.scrollPlayerIntoView = function (state) {
 	let width = this.dom.clientWidth;
 	let height = this.dom.clientHeight;
@@ -218,3 +228,23 @@ DOMDisplay.prototype.scrollPlayerIntoView = function (state) {
 		this.dom.scrollTop = center.y + margin - height;
 	}
 };
+
+
+// Motion and collision
+
+Level.prototype.touches = function (pos, size, type) {
+	var xStart = Math.floor(pos.x);
+	var xEnd = Math.ceil(pos.x + size.x);
+	var yStart = Math.floor(pos.y);
+	var yEnd = Math.ceil(pos.y + size.y);
+
+	for(var y = yStart; y < yEnd; y++) {
+		for (var x = xStart; x < xEnd; x++) {
+			let isOutside = x < 0 || x >= this.width || y < 0 || y >= this.height;
+
+			let here = isOutside ? "wall" : this.rows[ y ][ x ];
+			if (here == type) return true;
+		}
+	}
+	return false;
+}
