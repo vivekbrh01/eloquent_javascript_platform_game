@@ -29,7 +29,8 @@
 }
 .game {
 	overflow: hidden;
-	max-width: 600px;
+	/* max-width: 600px; */
+	max-width: 1200px;
 	max-height: 450px;
 	position: relative;
 }

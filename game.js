@@ -77,7 +77,6 @@ class Player {
 	}
 }
 
-
 Player.prototype.size = new Vec(0.8, 1.5);
 
 class Lava {
@@ -148,7 +147,6 @@ function elt(name, attrs, ...children) {
 	return dom;
 }
 
-
 class DOMDisplay {
 	constructor(parent, level) {
 		this.dom = elt("div", { class: "game" }, drawGrid(level));
@@ -161,8 +159,8 @@ class DOMDisplay {
 	}
 }
 
-
-const scale = 20;
+// const scale = 20;
+const scale = 40;
 
 function drawGrid(level) {
 	return elt(
@@ -229,7 +227,6 @@ DOMDisplay.prototype.scrollPlayerIntoView = function (state) {
 	}
 };
 
-
 // Motion and collision
 
 Level.prototype.touches = function (pos, size, type) {
@@ -238,13 +235,35 @@ Level.prototype.touches = function (pos, size, type) {
 	var yStart = Math.floor(pos.y);
 	var yEnd = Math.ceil(pos.y + size.y);
 
-	for(var y = yStart; y < yEnd; y++) {
+	for (var y = yStart; y < yEnd; y++) {
 		for (var x = xStart; x < xEnd; x++) {
 			let isOutside = x < 0 || x >= this.width || y < 0 || y >= this.height;
 
-			let here = isOutside ? "wall" : this.rows[ y ][ x ];
+			let here = isOutside ? "wall" : this.rows[y][x];
 			if (here == type) return true;
 		}
 	}
 	return false;
-}
+};
+
+// Interactivity 
+
+State.prototype.update = function (time, keys) {
+	let actors = this.actors.map((actor) => actor.update(time, this, keys));
+
+	let newState = new State(this.level, actors, this.status);
+
+	if (newState.status != "playing") return newState;
+
+	let player = newState.player;
+	if (this.level.touches(player.pos, player.size, "lava")) {
+		return new State(this.level, actors, "lost");
+	}
+
+	for (let actor of actors) {
+		if (actor != palyer && operverlap(actor, player)) {
+			newState = actor.collide(newState);
+		}
+	}
+	return newState;
+};
