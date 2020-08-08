@@ -1,4 +1,4 @@
-let simpleLevelPlan = `
+var simpleLevelPlan = `
 ......................
 ..#................#..
 ..#..............=.#..
@@ -9,15 +9,12 @@ let simpleLevelPlan = `
 ......##############..
 ......................`;
 
-class Level {
+var Level = class Level {
 	constructor(plan) {
 		let rows = plan
 			.trim()
 			.split("\n")
 			.map((l) => [...l]);
-
-		console.log(rows);
-
 		this.height = rows.length;
 		this.width = rows[0].length;
 		this.startActors = [];
@@ -31,25 +28,25 @@ class Level {
 			});
 		});
 	}
-}
+};
 
-class State {
+var State = class State {
 	constructor(level, actors, status) {
 		this.level = level;
 		this.actors = actors;
 		this.status = status;
 	}
+
 	static start(level) {
 		return new State(level, level.startActors, "playing");
 	}
+
 	get player() {
 		return this.actors.find((a) => a.type == "player");
 	}
-}
+};
 
-// Actors
-
-class Vec {
+var Vec = class Vec {
 	constructor(x, y) {
 		this.x = x;
 		this.y = y;
@@ -60,9 +57,9 @@ class Vec {
 	times(factor) {
 		return new Vec(this.x * factor, this.y * factor);
 	}
-}
+};
 
-class Player {
+var Player = class Player {
 	constructor(pos, speed) {
 		this.pos = pos;
 		this.speed = speed;
@@ -75,11 +72,11 @@ class Player {
 	static create(pos) {
 		return new Player(pos.plus(new Vec(0, -0.5)), new Vec(0, 0));
 	}
-}
+};
 
 Player.prototype.size = new Vec(0.8, 1.5);
 
-class Lava {
+var Lava = class Lava {
 	constructor(pos, speed, reset) {
 		this.pos = pos;
 		this.speed = speed;
@@ -99,11 +96,11 @@ class Lava {
 			return new Lava(pos, new Vec(0, 3), pos);
 		}
 	}
-}
+};
 
 Lava.prototype.size = new Vec(1, 1);
 
-class Coin {
+var Coin = class Coin {
 	constructor(pos, basePos, wobble) {
 		this.pos = pos;
 		this.basePos = basePos;
@@ -118,11 +115,11 @@ class Coin {
 		let basePos = pos.plus(new Vec(0.2, 0.1));
 		return new Coin(basePos, basePos, Math.random() * Math.PI * 2);
 	}
-}
+};
 
 Coin.prototype.size = new Vec(0.6, 0.6);
 
-const levelChars = {
+var levelChars = {
 	".": "empty",
 	"#": "wall",
 	"+": "lava",
@@ -132,9 +129,8 @@ const levelChars = {
 	"|": Lava,
 	v: Lava,
 };
-let simpleLevel = new Level(simpleLevelPlan);
 
-// Drawing
+var simpleLevel = new Level(simpleLevelPlan);
 
 function elt(name, attrs, ...children) {
 	let dom = document.createElement(name);
@@ -147,7 +143,7 @@ function elt(name, attrs, ...children) {
 	return dom;
 }
 
-class DOMDisplay {
+var DOMDisplay = class DOMDisplay {
 	constructor(parent, level) {
 		this.dom = elt("div", { class: "game" }, drawGrid(level));
 		this.actorLayer = null;
@@ -157,10 +153,9 @@ class DOMDisplay {
 	clear() {
 		this.dom.remove();
 	}
-}
+};
 
-// const scale = 20;
-const scale = 40;
+var scale = 20;
 
 function drawGrid(level) {
 	return elt(
@@ -207,10 +202,11 @@ DOMDisplay.prototype.scrollPlayerIntoView = function (state) {
 	let height = this.dom.clientHeight;
 	let margin = width / 3;
 
-	let left = this.dom.scrollLeft;
-	let right = left + width;
-	let top = this.dom.scrollTop;
-	let bottom = top + height;
+	// The viewport
+	let left = this.dom.scrollLeft,
+		right = left + width;
+	let top = this.dom.scrollTop,
+		bottom = top + height;
 
 	let player = state.player;
 	let center = player.pos.plus(player.size.times(0.5)).times(scale);
@@ -227,8 +223,6 @@ DOMDisplay.prototype.scrollPlayerIntoView = function (state) {
 	}
 };
 
-// Motion and collision
-
 Level.prototype.touches = function (pos, size, type) {
 	var xStart = Math.floor(pos.x);
 	var xEnd = Math.ceil(pos.x + size.x);
@@ -238,7 +232,6 @@ Level.prototype.touches = function (pos, size, type) {
 	for (var y = yStart; y < yEnd; y++) {
 		for (var x = xStart; x < xEnd; x++) {
 			let isOutside = x < 0 || x >= this.width || y < 0 || y >= this.height;
-
 			let here = isOutside ? "wall" : this.rows[y][x];
 			if (here == type) return true;
 		}
@@ -246,11 +239,8 @@ Level.prototype.touches = function (pos, size, type) {
 	return false;
 };
 
-// Interactivity
-
 State.prototype.update = function (time, keys) {
 	let actors = this.actors.map((actor) => actor.update(time, this, keys));
-
 	let newState = new State(this.level, actors, this.status);
 
 	if (newState.status != "playing") return newState;
@@ -261,14 +251,12 @@ State.prototype.update = function (time, keys) {
 	}
 
 	for (let actor of actors) {
-		if (actor != palyer && operverlap(actor, player)) {
+		if (actor != player && overlap(actor, player)) {
 			newState = actor.collide(newState);
 		}
 	}
 	return newState;
 };
-
-// Overlap
 
 function overlap(actor1, actor2) {
 	return (
@@ -279,8 +267,6 @@ function overlap(actor1, actor2) {
 	);
 }
 
-// Collide
-
 Lava.prototype.collide = function (state) {
 	return new State(state.level, state.actors, "lost");
 };
@@ -288,16 +274,12 @@ Lava.prototype.collide = function (state) {
 Coin.prototype.collide = function (state) {
 	let filtered = state.actors.filter((a) => a != this);
 	let status = state.status;
-	if (!filtered.some((a) => (a.type = "coin"))) status = "won";
+	if (!filtered.some((a) => a.type == "coin")) status = "won";
 	return new State(state.level, filtered, status);
 };
 
-// Actor updates
-
-// Lava update
 Lava.prototype.update = function (time, state) {
 	let newPos = this.pos.plus(this.speed.times(time));
-
 	if (!state.level.touches(newPos, this.size, "wall")) {
 		return new Lava(newPos, this.speed, this.reset);
 	} else if (this.reset) {
@@ -307,14 +289,12 @@ Lava.prototype.update = function (time, state) {
 	}
 };
 
-// Coin update
-const wobbleSpeed = 8;
-const wobbleDist = 0.07;
+var wobbleSpeed = 8,
+	wobbleDist = 0.07;
 
 Coin.prototype.update = function (time) {
 	let wobble = this.wobble + time * wobbleSpeed;
 	let wobblePos = Math.sin(wobble) * wobbleDist;
-
 	return new Coin(
 		this.basePos.plus(new Vec(0, wobblePos)),
 		this.basePos,
@@ -322,26 +302,22 @@ Coin.prototype.update = function (time) {
 	);
 };
 
-const playerXSpeed = 7;
-const gravity = 30;
-const jumpSpeed = 17;
+var playerXSpeed = 7;
+var gravity = 30;
+var jumpSpeed = 17;
 
 Player.prototype.update = function (time, state, keys) {
 	let xSpeed = 0;
-
 	if (keys.ArrowLeft) xSpeed -= playerXSpeed;
 	if (keys.ArrowRight) xSpeed += playerXSpeed;
-
 	let pos = this.pos;
 	let movedX = pos.plus(new Vec(xSpeed * time, 0));
-
 	if (!state.level.touches(movedX, this.size, "wall")) {
 		pos = movedX;
 	}
 
 	let ySpeed = this.speed.y + time * gravity;
 	let movedY = pos.plus(new Vec(0, ySpeed * time));
-
 	if (!state.level.touches(movedY, this.size, "wall")) {
 		pos = movedY;
 	} else if (keys.ArrowUp && ySpeed > 0) {
@@ -351,3 +327,63 @@ Player.prototype.update = function (time, state, keys) {
 	}
 	return new Player(pos, new Vec(xSpeed, ySpeed));
 };
+
+function trackKeys(keys) {
+	let down = Object.create(null);
+	function track(event) {
+		if (keys.includes(event.key)) {
+			down[event.key] = event.type == "keydown";
+			event.preventDefault();
+		}
+	}
+	window.addEventListener("keydown", track);
+	window.addEventListener("keyup", track);
+	return down;
+}
+
+var arrowKeys = trackKeys(["ArrowLeft", "ArrowRight", "ArrowUp"]);
+
+// Running the game
+function runAnimation(frameFunc) {
+	let lastTime = null;
+	function frame(time) {
+		if (lastTime != null) {
+			let timeStep = Math.min(time - lastTime, 100) / 1000;
+			if (frameFunc(timeStep) === false) return;
+		}
+		lastTime = time;
+		requestAnimationFrame(frame);
+	}
+	requestAnimationFrame(frame);
+}
+
+// Running the level
+function runLevel(level, Display) {
+	let display = new Display(document.body, level);
+	let state = State.start(level);
+	let ending = 1;
+	return new Promise((resolve) => {
+		runAnimation((time) => {
+			state = state.update(time, arrowKeys);
+			display.syncState(state);
+			if (state.status == "playing") {
+				return true;
+			} else if (ending > 0) {
+				ending -= time;
+				return true;
+			} else {
+				display.clear();
+				resolve(state.status);
+				return false;
+			}
+		});
+	});
+}
+
+async function runGame(plans, Display) {
+	for (let level = 0; level < plans.length; ) {
+		let status = await runLevel(new Level(plans[level]), Display);
+		if (status == "won") level++;
+	}
+	console.log("You've won!");
+}
