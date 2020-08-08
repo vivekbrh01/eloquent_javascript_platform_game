@@ -207,10 +207,10 @@ DOMDisplay.prototype.scrollPlayerIntoView = function (state) {
 	let height = this.dom.clientHeight;
 	let margin = width / 3;
 
-	let left = this.dom.scrollLeft,
-		right = left + width;
-	let top = this.dom.scrollTop,
-		bottom = top + height;
+	let left = this.dom.scrollLeft;
+	let right = left + width;
+	let top = this.dom.scrollTop;
+	let bottom = top + height;
 
 	let player = state.player;
 	let center = player.pos.plus(player.size.times(0.5)).times(scale);
@@ -246,7 +246,7 @@ Level.prototype.touches = function (pos, size, type) {
 	return false;
 };
 
-// Interactivity 
+// Interactivity
 
 State.prototype.update = function (time, keys) {
 	let actors = this.actors.map((actor) => actor.update(time, this, keys));
@@ -266,4 +266,29 @@ State.prototype.update = function (time, keys) {
 		}
 	}
 	return newState;
+};
+
+// Overlap
+
+function overlap(actor1, actor2) {
+	return (
+		actor1.pos.x + actor1.size.x > actor2.pos.x &&
+		actor1.pos.x < actor2.pos.x + actor2.size.x &&
+		actor1.pos.y + actor1.size.y > actor2.pos.y &&
+		actor1.pos.y < actor2.pos.y + actor2.size.y
+	);
+}
+
+
+// Collide
+
+Lava.prototype.collide = function (state) {
+	return new State(state.level, state.actors, "lost");
+};
+
+Coin.prototype.collide = function (state) {
+	let filtered = state.actors.filter((a) => a != this);
+	let status = state.status;
+	if (!filtered.some((a) => (a.type = "coin"))) status = "won";
+	return new State(state.level, filtered, status);
 };
